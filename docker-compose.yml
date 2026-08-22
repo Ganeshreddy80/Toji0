@@ -1,0 +1,91 @@
+services:
+  # ── PostgreSQL Database ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: toji-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: toji
+      POSTGRES_USER: toji
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U toji" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ── Redis Cache ────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: toji-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ── TOJI App Service ────────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: toji-app
+    restart: unless-stopped
+    command: python scripts/runtime_supervisor.py
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - TOJI_DATABASE_HOST=toji-postgres
+      - TOJI_DATABASE_PORT=5432
+      - TOJI_DATABASE_DATABASE=toji
+      - TOJI_DATABASE_USERNAME=toji
+      - TOJI_DATABASE_PASSWORD=password
+      - DATABASE_HOST=toji-postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=toji
+      - DATABASE_USER=toji
+      - DATABASE_PASSWORD=password
+      - REDIS_URL=redis://toji-redis:6379/0
+      - TOJI_ADMIN_API_KEY=${TOJI_ADMIN_API_KEY}
+      - TOJI_ANALYST_API_KEY=${TOJI_ANALYST_API_KEY}
+      - BINANCE_SYMBOLS=${BINANCE_SYMBOLS:-BTCUSDT,ETHUSDT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: toji-network
+    driver: bridge

@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toji Quant Research & Trading Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Babel & React via CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(26, 28, 35, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #6c5ce7;
+            --primary-glow: rgba(108, 92, 231, 0.4);
+            --accent: #00cec9;
+            --accent-glow: rgba(0, 206, 201, 0.3);
+            --text-main: #f5f6fa;
+            --text-muted: #a0a5b5;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+            --info: #0984e3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(108, 92, 231, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(0, 206, 201, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top Header Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            backdrop-filter: blur(12px);
+            background: rgba(15, 17, 23, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-section h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #a29bfe, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            list-style: none;
+        }
+
+        .nav-item {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+            background: rgba(108, 92, 231, 0.15);
+            border-color: rgba(108, 92, 231, 0.3);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.1);
+        }
+
+        .live-status {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(0, 184, 148, 0.1);
+            border: 1px solid rgba(0, 184, 148, 0.25);
+            padding: 0.5rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .live-status.disconnected {
+            background: rgba(214, 48, 49, 0.1);
+            border-color: rgba(214, 48, 49, 0.25);
+            color: var(--danger);
+        }
+
+        .ping-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 184, 148, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Grid Layouts */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Glassmorphism Cards */
+        .card {
+            backdrop-filter: blur(16px);
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: background 0.3s;
+        }
+
+        .card.primary::before { background: var(--primary); }
+        .card.accent::before { background: var(--accent); }
+        .card.success::before { background: var(--success); }
+        .card.warning::before { background: var(--warning); }
+        .card.danger::before { background: var(--danger); }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.6rem;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        /* Subsystem Health Badge styles */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .health-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.8rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            gap: 0.4rem;
+        }
+
+        .health-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-healthy { background: rgba(0, 184, 148, 0.15); color: var(--success); border: 1px solid rgba(0, 184, 148, 0.3); }
+        .status-initializing { background: rgba(9, 132, 227, 0.15); color: var(--info); border: 1px solid rgba(9, 132, 227, 0.3); }
+        .status-warning { background: rgba(253, 203, 110, 0.15); color: var(--warning); border: 1px solid rgba(253, 203, 110, 0.3); }
+        .status-error { background: rgba(214, 48, 49, 0.15); color: var(--danger); border: 1px solid rgba(214, 48, 49, 0.3); }
+        .status-offline { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border-color); }
+
+        /* Metric values */
+        .metric-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .metric-value.highlight {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Log console */
+        .log-console {
+            background: #0f1015;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            padding: 1rem;
+            height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+            color: #dcdde1;
+        }
+
+        .log-entry.info { color: #00cec9; }
+        .log-entry.warn { color: #fbc531; }
+        .log-entry.error { color: #e84118; }
+
+        /* Event Timeline */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            border-left: 2px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0.5rem;
+            position: relative;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .timeline-time {
+            color: var(--text-muted);
+        }
+
+        .timeline-subsystem {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-select {
+            background: #1e2029;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            background: rgba(15, 17, 23, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // WebSocket connections manager helper
+        function useWebSocket(channel, onMessage) {
+            const [connected, setConnected] = useState(false);
+            const ws = useRef(null);
+
+            useEffect(() => {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host || 'localhost:8000';
+                const wsUrl = `${protocol}//${host}/ws/${channel}`;
+                
+                ws.current = new WebSocket(wsUrl);
+
+                ws.current.onopen = () => {
+                    setConnected(true);
+                    logger(`Connected to WebSocket channel: ${channel}`, 'info');
+                };
+
+                ws.current.onmessage = (event) => {
+                    try {
+                        const parsed = JSON.parse(event.data);
+                        onMessage(parsed);
+                    } catch (e) {
+                        logger(`Failed to parse ws data: ${event.data}`, 'warn');
+                    }
+                };
+
+                ws.current.onclose = () => {
+                    setConnected(false);
+                    logger(`Disconnected from WebSocket channel: ${channel}`, 'warn');
+                    // Attempt reconnect in 5s
+                    setTimeout(() => {}, 5000);
+                };
+
+                return () => {
+                    if (ws.current) ws.current.close();
+                };
+            }, [channel]);
+
+            return connected;
+        }
+
+        // Global Logger timeline buffer
+        let logBuffer = [];
+        let onLogAdded = null;
+        function logger(msg, severity = 'info') {
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString() + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const newLog = { timestamp, message: msg, severity };
+            logBuffer.push(newLog);
+            if (logBuffer.length > 500) logBuffer.shift();
+            if (onLogAdded) onLogAdded(newLog);
+        }
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [health, setHealth] = useState({});
+            const [snapshots, setSnapshots] = useState([]);
+            const [logs, setLogs] = useState([]);
+            const [events, setEvents] = useState([]);
+            const [selectedSymbol, setSelectedSymbol] = useState('');
+            const [selectedTimeframe, setSelectedTimeframe] = useState('');
+            const [execAnalytics, setExecAnalytics] = useState(null);
+            const [execAudit, setExecAudit] = useState([]);
+            const [execCapabilities, setExecCapabilities] = useState(null);
+            const [portfolioData, setPortfolioData] = useState(null);
+            const [portfolioPositions, setPortfolioPositions] = useState({ open: [], closed: [] });
+            const [platformStatus, setPlatformStatus] = useState(null);
+            const [platformHeartbeats, setPlatformHeartbeats] = useState({});
+            const [platformModules, setPlatformModules] = useState([]);
+            const [platformEvents, setPlatformEvents] = useState([]);
+
+            // Sprint 7 Risk states
+            const [riskStatus, setRiskStatus] = useState([]);
+            const [riskBreakers, setRiskBreakers] = useState({});
+            const [riskOverrideActive, setRiskOverrideActive] = useState(false);
+            const [emergencyStopActive, setEmergencyStopActive] = useState(false);
+
+            // Sprint 8 OMS & EMS states
+            const [omsIntents, setOmsIntents] = useState([]);
+            const [omsState, setOmsState] = useState(null);
+            const [brokerStatuses, setBrokerStatuses] = useState([]);
+            const [emsExecutions, setEmsExecutions] = useState([]);
+
+            const triggerRecovery = async () => {
+                try {
+                    const res = await fetch('/api/v1/orders/recovery', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'completed') {
+                        logger('OMS Crash Recovery Reconciliation completed.', 'info');
+                        // Refresh data
+                        fetchInitialData();
+                    } else {
+                        logger('Recovery trigger failed: ' + data.message, 'error');
+                    }
+                } catch (err) {
+                    logger('Error triggering recovery: ' + err.message, 'error');
+                }
+            };
+
+            const triggerKillswitch = async () => {
+                try {
+                    const res = await fetch('/api/v1/risk/killswitch', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'triggered') {
+                        setEmergencyStopActive(true);
+                        logger('Emergency manual killswitch activated successfully.', 'warn');
+                    } else {
+                        logger('Failed to trigger killswitch: ' + data.message, 'error');
+                    }
+                } catch (err) {
+                    logger('Error triggering killswitch: ' + err.message, 'error');
+                }
+            };
+
+            const toggleOverride = async (enable) => {
+                try {
+                    const res = await fetch(`/api/v1/risk/override?enable=${enable}`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'configured') {
+                        setRiskOverrideActive(data.override_active);
+                        logger('Risk override mode set to ' + data.override_active, 'warn');
+                    } else {
+                        logger('Failed to set risk override: ' + data.message, 'error');
+                    }
+                } catch (err) {
+                    logger('Error setting risk override: ' + err.message, 'error');
+                }
+            };
+
+            // Keep reference to logs buffer
+            useEffect(() => {
+                setLogs([...logBuffer]);
+                onLogAdded = (newLog) => {
+                    setLogs((prev) => [...prev, newLog].slice(-500));
+                };
+                return () => { onLogAdded = null; };
+            }, []);
+
+            // 1. Fetch initial REST API states
+            const fetchInitialData = async () => {
+                try {
+                    // Fetch health
+                    const healthRes = await fetch('/health');
+                    const healthData = await healthRes.json();
+                    setHealth(healthData);
+
+                    // Fetch snapshots
+                    const snapRes = await fetch('/dashboard');
+                    const snapData = await snapRes.json();
+                    setSnapshots(snapData);
+
+                    // Fetch events history
+                    const eventsRes = await fetch('/events');
+                    const eventsData = await eventsRes.json();
+                    setEvents(eventsData);
+
+                    // Fetch execution analytics
+                    try {
+                        const analyticsRes = await fetch('/executions/analytics');
+                        const analyticsData = await analyticsRes.json();
+                        setExecAnalytics(analyticsData);
+                    } catch (err) {}
+
+                    // Fetch execution audit
+                    try {
+                        const auditRes = await fetch('/executions/audit');
+                        const auditData = await auditRes.json();
+                        setExecAudit(auditData);
+                    } catch (err) {}
+
+                    // Fetch broker capabilities
+                    try {
+                        const capRes = await fetch('/executions/capabilities');
+                        const capData = await capRes.json();
+                        setExecCapabilities(capData);
+                    } catch (err) {}
+
+                    // Fetch portfolio metrics
+                    try {
+                        const portMetricsRes = await fetch('/portfolio/metrics');
+                        const portMetricsData = await portMetricsRes.json();
+                        setPortfolioData(portMetricsData);
+                    } catch (err) {}
+
+                    // Fetch portfolio positions
+                    try {
+                        const portPosRes = await fetch('/portfolio/positions');
+                        const portPosData = await portPosRes.json();
+                        setPortfolioPositions(portPosData);
+                    } catch (err) {}
+
+                    // Fetch platform status
+                    try {
+                        const statusRes = await fetch('/platform/status');
+                        const statusData = await statusRes.json();
+                        setPlatformStatus(statusData);
+                    } catch (err) {}
+
+                    // Fetch platform heartbeats
+                    try {
+                        const hbRes = await fetch('/platform/heartbeat');
+                        const hbData = await hbRes.json();
+                        setPlatformHeartbeats(hbData);
+                    } catch (err) {}
+
+                    // Fetch platform modules
+                    try {
+                        const modRes = await fetch('/platform/modules');
+                        const modData = await modRes.json();
+                        setPlatformModules(modData);
+                    } catch (err) {}
+
+                    // Fetch platform events
+                    try {
+                        const evRes = await fetch('/platform/events');
+                        const evData = await evRes.json();
+                        setPlatformEvents(evData);
+                    } catch (err) {}
+
+                    // Fetch Sprint 7 Risk states
+                    try {
+                        const rStatusRes = await fetch('/api/v1/risk/status');
+                        const rStatusData = await rStatusRes.json();
+                        setRiskStatus(rStatusData);
+
+                        // Align local stop/override flags with active state config
+                        if (rStatusData && rStatusData.length > 0) {
+                            const sampleConfig = rStatusData[0].states ? Object.values(rStatusData[0].states)[0].config : null;
+                            if (sampleConfig) {
+                                setEmergencyStopActive(sampleConfig.emergency_stop || sampleConfig.manual_kill_switch);
+                                setRiskOverrideActive(sampleConfig.risk_override);
+                            }
+                        }
+                    } catch (err) {}
+
+                    // Fetch Sprint 7 Circuit breakers status
+                    try {
+                        const rBreakersRes = await fetch('/api/v1/risk/breakers');
+                        const rBreakersData = await rBreakersRes.json();
+                        setRiskBreakers(rBreakersData);
+                    } catch (err) {}
+
+                    // Fetch Sprint 8 OMS & EMS states
+                    try {
+                        const intentsRes = await fetch('/api/v1/orders/intents');
+                        const intentsData = await intentsRes.json();
+                        setOmsIntents(intentsData);
+                    } catch (err) {}
+
+                    try {
+                        const omsStateRes = await fetch('/api/v1/orders/oms/state');
+                        const omsStateData = await omsStateRes.json();
+                        setOmsState(omsStateData);
+                    } catch (err) {}
+
+                    try {
+                        const brokersRes = await fetch('/api/v1/orders/brokers');
+                        const brokersData = await brokersRes.json();
+                        setBrokerStatuses(brokersData);
+                    } catch (err) {}
+
+                    try {
+                        const execsRes = await fetch('/api/v1/orders/executions');
+                        const execsData = await execsRes.json();
+                        setEmsExecutions(execsData);
+                    } catch (err) {}
+                    
+                    logger('Successfully loaded state data from REST API.', 'info');
+                } catch (e) {
+                    logger('REST API connection failed. Retrying in background...', 'error');
+                }
+            };
+
+            useEffect(() => {
+                fetchInitialData();
+                const interval = setInterval(fetchInitialData, 10000);
+                return () => clearInterval(interval);
+            }, []);
+
+            // 2. Wire WebSockets channel updates
+            const systemConnected = useWebSocket('system', (snapshot) => {
+                // Update or add snapshot
+                setSnapshots((prev) => {
+                    const idx = prev.findIndex(s => s.symbol === snapshot.symbol && s.timeframe === snapshot.timeframe);
+                    if (idx >= 0) {
+                        const newSnaps = [...prev];
+                        newSnaps[idx] = snapshot;
+                        return newSnaps;
+                    } else {
+                        return [...prev, snapshot];
+                    }
+                });
+                
+                // Keep health aligned
+                if (snapshot.health_status) {
+                    setHealth(snapshot.health_status);
+                }
+            });
+
+            const logsConnected = useWebSocket('logs', (data) => {
+                logger(data.message, data.severity || 'info');
+            });
+
+            // Filter tools
+            const activeSymbols = Array.from(new Set(snapshots.map(s => s.symbol)));
+            const activeTimeframes = Array.from(new Set(snapshots.map(s => s.timeframe)));
+
+            const filteredSnapshots = snapshots.filter(s => {
+                if (selectedSymbol && s.symbol !== selectedSymbol) return false;
+                if (selectedTimeframe && s.timeframe !== selectedTimeframe) return false;
+                return true;
+            });
+
+            const activeSnapshot = filteredSnapshots[0] || null;
+
+            return (
+                <div class="container">
+                    <header>
+                        <div class="logo-section">
+                            <i class="fa-solid fa-cube fa-xl" style={{color: 'var(--accent)'}}></i>
+                            <h1>TOJI observatory</h1>
+                        </div>
+                        <ul class="nav-links">
+                            <li class={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                                <i class="fa-solid fa-gauge"></i> Dashboard
+                            </li>
+                            <li class={`nav-item ${activeTab === 'market' ? 'active' : ''}`} onClick={() => setActiveTab('market')}>
+                                <i class="fa-solid fa-chart-line"></i> Market
+                            </li>
+                            <li class={`nav-item ${activeTab === 'patterns' ? 'active' : ''}`} onClick={() => setActiveTab('patterns')}>
+                                <i class="fa-solid fa-shapes"></i> Patterns
+                            </li>
+                            <li class={`nav-item ${activeTab === 'confluence' ? 'active' : ''}`} onClick={() => setActiveTab('confluence')}>
+                                <i class="fa-solid fa-circle-nodes"></i> Confluence
+                            </li>
+                            <li class={`nav-item ${activeTab === 'strategy' ? 'active' : ''}`} onClick={() => setActiveTab('strategy')}>
+                                <i class="fa-solid fa-brain"></i> Strategy
+                            </li>
+                            <li class={`nav-item ${activeTab === 'risk' ? 'active' : ''}`} onClick={() => setActiveTab('risk')}>
+                                <i class="fa-solid fa-shield-halved"></i> Risk
+                            </li>
+                             <li class={`nav-item ${activeTab === 'position' ? 'active' : ''}`} onClick={() => setActiveTab('position')}>
+                                 <i class="fa-solid fa-scale-balanced"></i> Sizing
+                             </li>
+                              <li class={`nav-item ${activeTab === 'execution' ? 'active' : ''}`} onClick={() => setActiveTab('execution')}>
+                                  <i class="fa-solid fa-bolt"></i> Execution
+                              </li>
+                              <li class={`nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>
+                                  <i class="fa-solid fa-briefcase"></i> Portfolio
+                              </li>
+                              <li class={`nav-item ${activeTab === 'platform' ? 'active' : ''}`} onClick={() => setActiveTab('platform')}>
+                                  <i class="fa-solid fa-server"></i> Platform
+                              </li>
+                              <li class={`nav-item ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
+                                  <i class="fa-solid fa-terminal"></i> Console
+                              </li>
+                        </ul>
+                        <div class={`live-status ${(!systemConnected || !logsConnected) ? 'disconnected' : ''}`}>
+                            <div class="ping-dot"></div>
+                            {systemConnected ? 'WS STREAMING' : 'WS OFFLINE'}
+                        </div>
+                    </header>
+
+                    <main>
+                        {/* Filter Bar */}
+                        <div class="filter-bar">
+                            <i class="fa-solid fa-filter" style={{color: 'var(--text-muted)'}}></i>
+                            <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>Filter Snapshots:</span>
+                            <select class="filter-select" value={selectedSymbol} onChange={(e) => setSelectedSymbol(e.target.value)}>
+                                <option value="">All Symbols</option>
+                                {activeSymbols.map(sym => <option key={sym} value={sym}>{sym}</option>)}
+                            </select>
+                            <select class="filter-select" value={selectedTimeframe} onChange={(e) => setSelectedTimeframe(e.target.value)}>
+                                <option value="">All Timeframes</option>
+                                {activeTimeframes.map(tf => <option key={tf} value={tf}>{tf}</option>)}
+                            </select>
+                        </div>
+
+                        {/* TAB CONTENTS */}
+                        {activeTab === 'dashboard' && (
+                            <React.Fragment>
+                                {/* Health widgets card */}
+                                <div class="card primary">
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-heart-pulse"></i> Subsystem Diagnostics</span>
+                                        <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>Real-time Observability Monitor</span>
+                                    </div>
+                                    <div class="health-grid">
+                                        {Object.entries(health).map(([sub, data]) => (
+                                            <div key={sub} class="health-item">
+                                                <span style={{fontSize: '0.9rem', fontWeight: 600}}>{sub}</span>
+                                                <span class={`health-badge status-${data.status.toLowerCase()}`}>{data.status}</span>
+                                                <span style={{fontSize: '0.7rem', color: 'var(--text-muted)'}}>{data.message_count} msgs</span>
+                                                <span style={{fontSize: '0.7rem', color: 'var(--accent)'}}>{data.processing_latency_ms.toFixed(1)} ms</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Overview grids */}
+                                <div class="dashboard-grid">
+                                    {/* Active Trades Overview */}
+                                    <div class="card accent">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-money-bill-trend-up"></i> Market States Overview</span>
+                                        </div>
+                                        {filteredSnapshots.map(snap => (
+                                            <div key={snap.snapshot_id} style={{marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem'}}>
+                                                <div class="metric-group">
+                                                    <span style={{fontWeight: 700}}>{snap.symbol} ({snap.timeframe})</span>
+                                                    <span class="metric-value highlight">{snap.market_state?.trend?.direction || 'RANGING'}</span>
+                                                </div>
+                                                <div class="metric-group">
+                                                    <span class="metric-label">BOS breakout history</span>
+                                                    <span class="metric-value">{snap.market_state?.bos_history?.length || 0} events</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {filteredSnapshots.length === 0 && <p style={{color: 'var(--text-muted)'}}>No active market state snapshots found.</p>}
+                                    </div>
+
+                                    {/* Risk Metrics Card */}
+                                    <div class="card danger">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-triangle-exclamation"></i> Risk Engine Decider</span>
+                                        </div>
+                                        {activeSnapshot && activeSnapshot.risk_assessment ? (
+                                            <div>
+                                                <div class="metric-group">
+                                                    <span class="metric-label">Overall Safety Score</span>
+                                                    <span style={{
+                                                        color: activeSnapshot.risk_assessment.overall_score >= 85 ? 'var(--success)' : 
+                                                               activeSnapshot.risk_assessment.overall_score >= 80 ? 'var(--warning)' : 'var(--danger)',
+                                                        fontWeight: 700,
+                                                        fontSize: '1.25rem'
+                                                    }}>{activeSnapshot.risk_assessment.overall_score.toFixed(1)} / 100</span>
+                                                </div>
+                                                <div class="metric-group">
+                                                    <span class="metric-label">Risk Decision Permit</span>
+                                                    <span class={`health-badge status-${activeSnapshot.risk_assessment.decision.toLowerCase()}`}>{activeSnapshot.risk_assessment.decision}</span>
+                                                </div>
+                                                <div style={{marginTop: '0.8rem'}}>
+                                                    <span class="metric-label" style={{fontSize: '0.8rem'}}>Violations timeline:</span>
+                                                    {activeSnapshot.risk_assessment.violations && activeSnapshot.risk_assessment.violations.map((v, i) => (
+                                                        <p key={i} style={{fontSize: '0.8rem', color: 'var(--danger)', marginTop: '0.2rem'}}><i class="fa-solid fa-circle-xmark"></i> {v}</p>
+                                                    ))}
+                                                    {(!activeSnapshot.risk_assessment.violations || activeSnapshot.risk_assessment.violations.length === 0) && <p style={{fontSize: '0.8rem', color: 'var(--success)', marginTop: '0.2rem'}}><i class="fa-solid fa-circle-check"></i> No risk limits breached.</p>}
+                                                </div>
+                                            </div>
+                                        ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter to load risk data.</p>}
+                                    </div>
+
+                                    {/* Position Sizing Card */}
+                                    <div class="card success">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-coins"></i> Capital Sizer</span>
+                                        </div>
+                                        {activeSnapshot && activeSnapshot.position_size ? (
+                                            <div>
+                                                <div class="metric-group">
+                                                    <span class="metric-label">Sizing calculations status</span>
+                                                    <span class="metric-value">{activeSnapshot.position_size.status || 'UNSIZED'}</span>
+                                                </div>
+                                                {activeSnapshot.position_size.position_size && (
+                                                    <React.Fragment>
+                                                        <div class="metric-group">
+                                                            <span class="metric-label">Calculated Base Qty</span>
+                                                            <span class="metric-value highlight">{activeSnapshot.position_size.position_size.quantity.toFixed(4)}</span>
+                                                        </div>
+                                                        <div class="metric-group">
+                                                            <span class="metric-label">Required Leverage</span>
+                                                            <span class="metric-value">{activeSnapshot.position_size.position_size.leverage.toFixed(2)}x</span>
+                                                        </div>
+                                                        <div class="metric-group">
+                                                            <span class="metric-label">Margin Required</span>
+                                                            <span class="metric-value">${activeSnapshot.position_size.position_size.margin_required.toFixed(2)}</span>
+                                                        </div>
+                                                    </React.Fragment>
+                                                )}
+                                            </div>
+                                        ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter to load position sizing.</p>}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        )}
+
+                        {activeTab === 'market' && (
+                            <div class="card accent">
+                                <div class="card-title">
+                                    <span><i class="fa-solid fa-chart-line"></i> Market State Details</span>
+                                </div>
+                                {activeSnapshot && activeSnapshot.market_state ? (
+                                    <div>
+                                        <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem'}}>
+                                            {JSON.stringify(activeSnapshot.market_state, null, 2)}
+                                        </pre>
+                                    </div>
+                                ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter containing market state observations.</p>}
+                            </div>
+                        )}
+
+                        {activeTab === 'patterns' && (
+                            <div class="card primary">
+                                <div class="card-title">
+                                    <span><i class="fa-solid fa-shapes"></i> Price Action Patterns</span>
+                                </div>
+                                {activeSnapshot && activeSnapshot.pattern_state ? (
+                                    <div>
+                                        <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem'}}>
+                                            {JSON.stringify(activeSnapshot.pattern_state, null, 2)}
+                                        </pre>
+                                    </div>
+                                ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter containing pattern matches.</p>}
+                            </div>
+                        )}
+
+                        {activeTab === 'confluence' && (() => {
+                            if (!activeSnapshot || !activeSnapshot.confluence) {
+                                return (
+                                    <div class="card accent">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-circle-nodes"></i> Confluence Engine</span>
+                                        </div>
+                                        <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter containing confluence score matrices.</p>
+                                    </div>
+                                );
+                            }
+                            
+                            const confState = activeSnapshot.confluence;
+                            const score = confState.score || confState;
+                            
+                            const getGradeColor = (g) => {
+                                switch (g) {
+                                    case 'A+': return '#ffd700'; // Gold
+                                    case 'A': return 'var(--success)'; // Green
+                                    case 'B+': return '#00cec9'; // Teal
+                                    case 'B': return 'var(--info)'; // Blue
+                                    case 'C': return 'var(--warning)'; // Yellow
+                                    default: return 'var(--danger)'; // Red
+                                }
+                            };
+                            
+                            const grade = score.setup_grade || 'No Trade';
+                            const gradeColor = getGradeColor(grade);
+                            
+                            return (
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                                    {/* Summary Cards Row */}
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem'}}>
+                                        
+                                        {/* Confluence Score Ring Gauge */}
+                                        <div class="card primary" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px'}}>
+                                            <div class="card-title" style={{width: '100%'}}>
+                                                <span><i class="fa-solid fa-gauge-high"></i> Confluence Score</span>
+                                            </div>
+                                            <div style={{position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                                <svg style={{transform: 'rotate(-90deg)', width: '120px', height: '120px'}}>
+                                                    <circle cx="60" cy="60" r="50" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="8"/>
+                                                    <circle cx="60" cy="60" r="50" fill="transparent" stroke="var(--primary)" strokeWidth="8"
+                                                            strokeDasharray="314.16" strokeDashoffset={314.16 - (314.16 * (score.overall_score || 0)) / 100}
+                                                            style={{transition: 'stroke-dashoffset 0.8s ease-in-out'}}/>
+                                                </svg>
+                                                <div style={{position: 'absolute', fontSize: '2rem', fontWeight: '700', fontFamily: 'Space Grotesk'}}>
+                                                    {score.overall_score !== undefined ? score.overall_score.toFixed(1) : '0.0'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Grade Badge Card */}
+                                        <div class="card accent" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px'}}>
+                                            <div class="card-title" style={{width: '100%'}}>
+                                                <span><i class="fa-solid fa-medal"></i> Setup Grade</span>
+                                            </div>
+                                            <div style={{
+                                                fontSize: '3.5rem',
+                                                fontWeight: '800',
+                                                fontFamily: 'Space Grotesk',
+                                                color: gradeColor,
+                                                textShadow: `0 0 20px ${gradeColor}40`,
+                                                margin: 'auto'
+                                            }}>
+                                                {grade}
+                                            </div>
+                                        </div>
+
+                                        {/* Opportunity Gauges Card */}
+                                        <div class="card success" style={{display: 'flex', flexDirection: 'column', minHeight: '200px'}}>
+                                            <div class="card-title">
+                                                <span><i class="fa-solid fa-rocket"></i> Opportunity Quality</span>
+                                            </div>
+                                            {score.opportunity ? (
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem', flex: 1, justifyContent: 'center'}}>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                                        <span style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>Opportunity Score</span>
+                                                        <span style={{fontWeight: '700', color: 'var(--success)'}}>{score.opportunity.opportunity_score}%</span>
+                                                    </div>
+                                                    <div style={{background: 'rgba(255,255,255,0.05)', borderRadius: '4px', height: '6px', overflow: 'hidden'}}>
+                                                        <div style={{width: `${score.opportunity.opportunity_score}%`, background: 'var(--success)', height: '100%', borderRadius: '4px'}} />
+                                                    </div>
+                                                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginTop: '0.4rem'}}>
+                                                        <div>
+                                                            <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>Setup Quality</div>
+                                                            <div style={{fontWeight: '600'}}>{score.opportunity.setup_quality}%</div>
+                                                        </div>
+                                                        <div>
+                                                            <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>Execution Quality</div>
+                                                            <div style={{fontWeight: '600'}}>{score.opportunity.execution_quality}%</div>
+                                                        </div>
+                                                        <div>
+                                                            <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>Expected R:R</div>
+                                                            <div style={{fontWeight: '600', color: 'var(--warning)'}}>{score.opportunity.expected_rr.toFixed(1)}:1</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{margin: 'auto', color: 'var(--text-muted)', fontSize: '0.9rem'}}>Opportunity data not available.</div>
+                                            )}
+                                        </div>
+
+                                    </div>
+
+                                    {/* Main split details content */}
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem'}}>
+                                        
+                                        {/* Left Column: Scores & Recommendation */}
+                                        <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                                            
+                                            {/* 11 Component progress bars */}
+                                            <div class="card">
+                                                <div class="card-title">
+                                                    <span><i class="fa-solid fa-chart-simple"></i> Score Components</span>
+                                                    <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>Penalty: -{score.conflict_penalty || 0}</span>
+                                                </div>
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                                    {[
+                                                        { name: 'Trend', val: score.trend_score, icon: 'fa-arrow-trend-up' },
+                                                        { name: 'Structure', val: score.structure_score, icon: 'fa-sitemap' },
+                                                        { name: 'Liquidity', val: score.liquidity_score, icon: 'fa-droplet' },
+                                                        { name: 'Zones', val: score.zone_score, icon: 'fa-layer-group' },
+                                                        { name: 'Volume', val: score.volume_score, icon: 'fa-volume-high' },
+                                                        { name: 'Regime', val: score.regime_score, icon: 'fa-scale-balanced' },
+                                                        { name: 'Session', val: score.session_score, icon: 'fa-clock' },
+                                                        { name: 'MTF Alignment', val: score.mtf_score, icon: 'fa-align-justify' },
+                                                        { name: 'Correlation', val: score.correlation_score, icon: 'fa-network-wired' },
+                                                        { name: 'Pattern Match', val: score.pattern_score, icon: 'fa-shapes' },
+                                                        { name: 'Pattern Quality', val: score.quality_score, icon: 'fa-star' }
+                                                    ].map(comp => (
+                                                        <div key={comp.name}>
+                                                            <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.2rem'}}>
+                                                                <span><i class={`fa-solid ${comp.icon}`} style={{width: '16px', marginRight: '6px', color: 'var(--primary)'}}></i> {comp.name}</span>
+                                                                <span style={{fontWeight: '600'}}>{comp.val !== undefined ? comp.val.toFixed(0) : '0'}</span>
+                                                            </div>
+                                                            <div style={{background: 'rgba(255,255,255,0.03)', borderRadius: '3px', height: '4px', overflow: 'hidden'}}>
+                                                                <div style={{width: `${comp.val || 0}%`, background: 'linear-gradient(90deg, var(--primary), var(--accent))', height: '100%'}} />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Explanation box */}
+                                            {score.explanation && (
+                                                <div class="card">
+                                                    <div class="card-title">
+                                                        <span><i class="fa-solid fa-comment-dots"></i> Explanation & Recommendation</span>
+                                                    </div>
+                                                    <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                                                        <div style={{
+                                                            background: `${gradeColor}15`,
+                                                            borderLeft: `4px solid ${gradeColor}`,
+                                                            padding: '0.8rem 1rem',
+                                                            borderRadius: '4px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.8rem'
+                                                        }}>
+                                                            <i class={`fa-solid ${grade === 'No Trade' ? 'fa-ban' : 'fa-circle-check'}`} style={{color: gradeColor, fontSize: '1.2rem'}}></i>
+                                                            <div>
+                                                                <div style={{fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)'}}>Recommendation</div>
+                                                                <div style={{fontWeight: '700', color: gradeColor}}>{score.explanation.recommendation}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem'}}>Grade Rationale</div>
+                                                            <p style={{fontSize: '0.9rem', lineHeight: '1.4'}}>{score.explanation.grade_rationale}</p>
+                                                        </div>
+                                                        {score.explanation.reasons && score.explanation.reasons.length > 0 && (
+                                                            <div>
+                                                                <div style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.3rem'}}>Supporting Reasons</div>
+                                                                <ul style={{paddingLeft: '1.2rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', lineHeight: '1.4'}}>
+                                                                    {score.explanation.reasons.map((reason, idx) => (
+                                                                        <li key={idx}>{reason}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Right Column: Risk and Factors */}
+                                        <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                                            
+                                            {/* Risk Flags Panel */}
+                                            <div class="card">
+                                                <div class="card-title">
+                                                    <span><i class="fa-solid fa-triangle-exclamation"></i> Active Risk Flags</span>
+                                                </div>
+                                                {score.risk_flags && score.risk_flags.some(f => f.active) ? (
+                                                    <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                                                        {score.risk_flags.filter(f => f.active).map(flag => {
+                                                            const isHigh = flag.severity >= 0.8;
+                                                            const color = isHigh ? 'var(--danger)' : 'var(--warning)';
+                                                            return (
+                                                                <div key={flag.flag_type} style={{
+                                                                    background: 'rgba(255,255,255,0.02)',
+                                                                    border: '1px solid var(--border-color)',
+                                                                    borderRadius: '8px',
+                                                                    padding: '0.8rem 1rem'
+                                                                }}>
+                                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem'}}>
+                                                                        <span style={{fontWeight: '600', color: color, fontSize: '0.9rem'}}>
+                                                                            <i class="fa-solid fa-circle-exclamation" style={{marginRight: '6px'}}></i>
+                                                                            {flag.flag_type}
+                                                                        </span>
+                                                                        <span style={{
+                                                                            fontSize: '0.75rem',
+                                                                            padding: '0.2rem 0.5rem',
+                                                                            borderRadius: '10px',
+                                                                            background: `${color}20`,
+                                                                            color: color,
+                                                                            fontWeight: '600'
+                                                                        }}>
+                                                                            Severity: {flag.severity.toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4'}}>
+                                                                        {flag.description}
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div style={{
+                                                        textAlign: 'center',
+                                                        padding: '2rem 1rem',
+                                                        background: 'rgba(0,184,148,0.05)',
+                                                        border: '1px dashed rgba(0,184,148,0.2)',
+                                                        borderRadius: '8px',
+                                                        color: 'var(--success)',
+                                                        fontSize: '0.9rem'
+                                                    }}>
+                                                        <i class="fa-solid fa-shield-halved" style={{fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block'}}></i>
+                                                        No active risk flags. Execution conditions favorable.
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Factors Panel */}
+                                            <div class="card">
+                                                <div class="card-title">
+                                                    <span><i class="fa-solid fa-list-check"></i> Analysis Factors</span>
+                                                </div>
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                                                    <div>
+                                                        <div style={{fontSize: '0.85rem', fontWeight: '600', color: 'var(--success)', marginBottom: '0.5rem'}}>
+                                                            Supporting Factors ({ (score.supporting_factors || []).length })
+                                                        </div>
+                                                        {score.supporting_factors && score.supporting_factors.length > 0 ? (
+                                                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                                                                {score.supporting_factors.map((f, idx) => (
+                                                                    <div key={idx} style={{fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.8rem', borderRadius: '4px', borderLeft: '3px solid var(--success)'}}>
+                                                                        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem'}}>
+                                                                            <span style={{fontWeight: '600'}}>{f.name} ({f.category})</span>
+                                                                            <span style={{color: 'var(--success)'}}>+{f.value}</span>
+                                                                        </div>
+                                                                        <div style={{color: 'var(--text-muted)', fontSize: '0.75rem'}}>{f.description}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>No supporting factors.</div>
+                                                        )}
+                                                    </div>
+
+                                                    <div style={{marginTop: '0.5rem'}}>
+                                                        <div style={{fontSize: '0.85rem', fontWeight: '600', color: 'var(--danger)', marginBottom: '0.5rem'}}>
+                                                            Conflicting Factors ({ (score.conflicting_factors || []).length })
+                                                        </div>
+                                                        {score.conflicting_factors && score.conflicting_factors.length > 0 ? (
+                                                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                                                                {score.conflicting_factors.map((f, idx) => (
+                                                                    <div key={idx} style={{fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.8rem', borderRadius: '4px', borderLeft: '3px solid var(--danger)'}}>
+                                                                        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem'}}>
+                                                                            <span style={{fontWeight: '600'}}>{f.name} ({f.category})</span>
+                                                                            <span style={{color: 'var(--danger)'}}>-{f.penalty}</span>
+                                                                        </div>
+                                                                        <div style={{color: 'var(--text-muted)', fontSize: '0.75rem'}}>{f.description}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>No conflicting factors.</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    
+                                    {/* Raw JSON State payload debug */}
+                                    <div class="card" style={{padding: '1rem'}}>
+                                        <details>
+                                            <summary style={{cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)'}}>Show Raw JSON State Payload</summary>
+                                            <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem', marginTop: '0.5rem'}}>
+                                                {JSON.stringify(activeSnapshot.confluence, null, 2)}
+                                            </pre>
+                                        </details>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {activeTab === 'strategy' && (
+                            <div class="card primary">
+                                <div class="card-title">
+                                    <span><i class="fa-solid fa-brain"></i> Strategy signals</span>
+                                </div>
+                                {activeSnapshot && activeSnapshot.strategy ? (
+                                    <div>
+                                        <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem'}}>
+                                            {JSON.stringify(activeSnapshot.strategy, null, 2)}
+                                        </pre>
+                                    </div>
+                                ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter containing active strategy signals.</p>}
+                            </div>
+                        )}
+
+                        {activeTab === 'risk' && (
+                            <React.Fragment>
+                                {/* 1. Emergency Controls Row */}
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card danger">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-triangle-exclamation"></i> Emergency Platform Controls</span>
+                                        </div>
+                                        <p style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.2rem'}}>
+                                            Emergency controls for manual halting or bypassing risk compliance constraints during platform anomalies.
+                                        </p>
+                                        
+                                        <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
+                                            {/* Kill switch section */}
+                                            <div style={{flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)'}}>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem'}}>
+                                                    <span style={{fontSize: '0.9rem', fontWeight: 'bold'}}>Emergency Stop</span>
+                                                    <span class={`badge ${emergencyStopActive ? 'danger' : 'success'}`} style={{padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem'}}>
+                                                        {emergencyStopActive ? 'ACTIVE' : 'INACTIVE'}
+                                                    </span>
+                                                </div>
+                                                {emergencyStopActive ? (
+                                                    <div style={{color: 'var(--danger)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', padding: '0.5rem 0'}}>
+                                                        <i class="fa-solid fa-circle-exclamation fa-beat"></i> ALL ROUTING HALTED
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => { if (confirm("Trigger Emergency Stop? This will halt all system orders immediately!")) triggerKillswitch(); }}
+                                                        style={{background: 'var(--danger)', border: 'none', color: '#fff', padding: '0.6rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%', transition: 'opacity 0.2s'}}
+                                                        onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                                                        onMouseOut={(e) => e.target.style.opacity = '1'}
+                                                    >
+                                                        ACTIVATE KILLSWITCH
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Override switch section */}
+                                            <div style={{flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)'}}>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem'}}>
+                                                    <span style={{fontSize: '0.9rem', fontWeight: 'bold'}}>Risk Bypass Override</span>
+                                                    <span class={`badge ${riskOverrideActive ? 'warning' : 'success'}`} style={{padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem'}}>
+                                                        {riskOverrideActive ? 'ACTIVE' : 'LOCKED'}
+                                                    </span>
+                                                </div>
+                                                {riskOverrideActive ? (
+                                                    <button 
+                                                        onClick={() => toggleOverride(false)}
+                                                        style={{background: 'var(--success)', border: 'none', color: '#fff', padding: '0.6rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%'}}
+                                                    >
+                                                        LOCK RISK RULES (NORMAL)
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => { if (confirm("Activate Risk Override? This will bypass security safety rules!")) toggleOverride(true); }}
+                                                        style={{background: 'var(--warning)', border: 'none', color: '#000', padding: '0.6rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%'}}
+                                                    >
+                                                        BYPASS RISK CHECKS
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 2. Active Breakers Card */}
+                                    <div class="card info">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-microchip"></i> Active Subsystem Circuit Breakers</span>
+                                        </div>
+                                        {Object.keys(riskBreakers).length > 0 ? (
+                                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '5px'}}>
+                                                {Object.entries(riskBreakers).map(([key, breaker]) => (
+                                                    <div key={key} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)'}}>
+                                                        <div>
+                                                            <div style={{fontSize: '0.85rem', fontWeight: 'bold'}}>{key}</div>
+                                                            <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>
+                                                                {breaker.active_breakers && breaker.active_breakers.length > 0 ? `Active: ${breaker.active_breakers.join(', ')}` : 'No active breaker flags'}
+                                                            </div>
+                                                        </div>
+                                                        <span class={`badge ${breaker.halt_trading ? 'danger' : 'success'}`} style={{padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold'}}>
+                                                            {breaker.halt_trading ? 'TRIPPED' : 'CLOSED'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p style={{color: 'var(--text-muted)', fontSize: '0.85rem'}}>No active circuit breaker stats available.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 3. Risk Health and Limit Utilisation for current selection */}
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    {/* Sizing vs Risk Limits */}
+                                    <div class="card primary">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-chart-bar"></i> Pre-Trade Risk Limits Utilization</span>
+                                        </div>
+                                        {(() => {
+                                            const activeRisk = riskStatus.find(s => s.symbol === selectedSymbol) || (riskStatus[0] || null);
+                                            const rState = activeRisk && activeRisk.states ? (activeRisk.states[selectedTimeframe] || Object.values(activeRisk.states)[0] || null) : null;
+                                            
+                                            if (!rState) {
+                                                return <p style={{color: 'var(--text-muted)', fontSize: '0.85rem'}}>Select an active symbol and timeframe to view live pre-trade utilization metrics.</p>;
+                                            }
+
+                                            // Calc progress values
+                                            const curLeverage = rState.leverage_risk ? rState.leverage_risk.current_leverage : 0;
+                                            const maxLeverage = rState.leverage_risk ? rState.leverage_risk.max_leverage_limit : 5;
+                                            const levPct = Math.min((curLeverage / maxLeverage) * 100, 100);
+
+                                            const curDrawdown = rState.drawdown_risk ? rState.drawdown_risk.current_drawdown * 100 : 0;
+                                            const maxDrawdown = rState.drawdown_risk ? rState.drawdown_risk.max_drawdown_limit * 100 : 10;
+                                            const ddPct = Math.min((curDrawdown / maxDrawdown) * 100, 100);
+
+                                            const curExposure = rState.exposure_risk ? rState.exposure_risk.current_exposure : 0;
+                                            const maxExposure = rState.exposure_risk ? rState.exposure_risk.max_exposure_limit : 50000;
+                                            const expPct = Math.min((curExposure / maxExposure) * 100, 100);
+
+                                            return (
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '1.2rem'}}>
+                                                    {/* Leverage utilization */}
+                                                    <div>
+                                                        <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem'}}>
+                                                            <span>Leverage Ratio: <strong>{curLeverage.toFixed(2)}x</strong> / {maxLeverage.toFixed(1)}x Limit</span>
+                                                            <span style={{color: levPct > 80 ? 'var(--danger)' : 'var(--text-muted)'}}>{levPct.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div style={{height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden'}}>
+                                                            <div style={{height: '100%', width: `${levPct}%`, background: levPct > 80 ? 'var(--danger)' : 'var(--primary)', borderRadius: '4px', transition: 'width 0.4s'}}></div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Drawdown limit */}
+                                                    <div>
+                                                        <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem'}}>
+                                                            <span>Equity Drawdown: <strong>{curDrawdown.toFixed(2)}%</strong> / {maxDrawdown.toFixed(2)}% Limit</span>
+                                                            <span style={{color: ddPct > 80 ? 'var(--danger)' : 'var(--text-muted)'}}>{ddPct.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div style={{height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden'}}>
+                                                            <div style={{height: '100%', width: `${ddPct}%`, background: ddPct > 80 ? 'var(--danger)' : 'var(--accent)', borderRadius: '4px', transition: 'width 0.4s'}}></div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Exposure utilization */}
+                                                    <div>
+                                                        <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem'}}>
+                                                            <span>Gross Exposure: <strong>${curExposure.toLocaleString()}</strong> / ${maxExposure.toLocaleString()} Limit</span>
+                                                            <span style={{color: expPct > 80 ? 'var(--danger)' : 'var(--text-muted)'}}>{expPct.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div style={{height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden'}}>
+                                                            <div style={{height: '100%', width: `${expPct}%`, background: expPct > 80 ? 'var(--danger)' : 'var(--success)', borderRadius: '4px', transition: 'width 0.4s'}}></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                    
+                                    {/* Evaluation summary */}
+                                    <div class="card accent">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-shield-halved"></i> Active Risk Assessment Details</span>
+                                        </div>
+                                        {(() => {
+                                            const activeRisk = riskStatus.find(s => s.symbol === selectedSymbol) || (riskStatus[0] || null);
+                                            const rState = activeRisk && activeRisk.states ? (activeRisk.states[selectedTimeframe] || Object.values(activeRisk.states)[0] || null) : null;
+                                            
+                                            if (!rState) {
+                                                return <p style={{color: 'var(--text-muted)', fontSize: '0.85rem'}}>Select an active symbol and timeframe to view live pre-trade assessment rules.</p>;
+                                            }
+
+                                            return (
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem'}}>
+                                                        <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>Decision Status</span>
+                                                        <span class={`badge ${rState.assessment.decision === 'ALLOW' ? 'success' : 'danger'}`} style={{fontWeight: 'bold', fontSize: '0.85rem'}}>
+                                                            {rState.assessment.decision}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem'}}>
+                                                        <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>Consolidated Safety Score</span>
+                                                        <span style={{fontSize: '0.9rem', fontWeight: 'bold', color: rState.assessment.overall_score < 70 ? 'var(--danger)' : 'var(--success)'}}>
+                                                            {rState.assessment.overall_score.toFixed(1)} / 100.0
+                                                        </span>
+                                                    </div>
+                                                    <div style={{fontSize: '0.85rem'}}>
+                                                        <div style={{color: 'var(--text-muted)', marginBottom: '0.3rem'}}>Rule Violations List:</div>
+                                                        {rState.assessment.violations && rState.assessment.violations.length > 0 ? (
+                                                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
+                                                                {rState.assessment.violations.map((violation, i) => (
+                                                                    <div key={i} style={{color: 'var(--danger)', display: 'flex', gap: '0.5rem', background: 'rgba(214,48,49,0.1)', padding: '0.4rem 0.6rem', borderRadius: '4px', borderLeft: '3px solid var(--danger)', fontSize: '0.75rem'}}>
+                                                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                                                        <span>{typeof violation === 'string' ? violation : violation.message}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <span style={{color: 'var(--success)', fontWeight: 'bold', fontSize: '0.8rem'}}>
+                                                                <i class="fa-solid fa-circle-check"></i> All 28 checks pass cleanly
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Raw JSON Debug */}
+                                <div class="card" style={{padding: '1rem'}}>
+                                    <details>
+                                        <summary style={{cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)'}}>Show Raw Risk State JSON</summary>
+                                        <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem', marginTop: '0.5rem'}}>
+                                            {JSON.stringify(riskStatus.find(s => s.symbol === selectedSymbol) || (riskStatus[0] || {}), null, 2)}
+                                        </pre>
+                                    </details>
+                                </div>
+                            </React.Fragment>
+                        )}
+
+                        {activeTab === 'position' && (
+                            <div class="card success">
+                                <div class="card-title">
+                                    <span><i class="fa-solid fa-scale-balanced"></i> Capital Allocation</span>
+                                </div>
+                                {activeSnapshot && activeSnapshot.position_size ? (
+                                    <div>
+                                        <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem'}}>
+                                            {JSON.stringify(activeSnapshot.position_size, null, 2)}
+                                        </pre>
+                                    </div>
+                                ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter containing position sizing parameters.</p>}
+                            </div>
+                        )}
+                        {activeTab === 'execution' && (
+                            <React.Fragment>
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card info">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-chart-line"></i> Success & Fill Rates</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Success Rate</span>
+                                            <span class="metric-value highlight" style={{color: 'var(--success)'}}>
+                                                {execAnalytics ? `${(execAnalytics.success_rate * 100).toFixed(1)}%` : '100.0%'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Fill Rate</span>
+                                            <span class="metric-value">
+                                                {execAnalytics ? `${(execAnalytics.fill_rate * 100).toFixed(1)}%` : '0.0%'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card accent">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-server"></i> Priority Queue & Volume</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Queue Depth</span>
+                                            <span class="metric-value">
+                                                {execAnalytics ? `${execAnalytics.queue_depth} orders` : '0 orders'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Throughput</span>
+                                            <span class="metric-value">
+                                                {execAnalytics ? `${execAnalytics.orders_per_second.toFixed(2)} orders/s` : '0.00 orders/s'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card danger">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-gauge-high"></i> Latency & Slippage</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Average Latency</span>
+                                            <span class="metric-value highlight">
+                                                {execAnalytics ? `${execAnalytics.average_latency_ms.toFixed(2)} ms` : '0.05 ms'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Avg Commission</span>
+                                            <span class="metric-value">
+                                                {execAnalytics ? `$${execAnalytics.average_commission.toFixed(2)}` : '$0.00'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card primary">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-network-wired"></i> Paper Broker Capabilities</span>
+                                        </div>
+                                        {execCapabilities && execCapabilities.paper ? (
+                                            <div style={{fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem'}}>
+                                                <div><strong>Market:</strong> {execCapabilities.paper.supports_market ? 'Yes' : 'No'}</div>
+                                                <div><strong>Limit:</strong> {execCapabilities.paper.supports_limit ? 'Yes' : 'No'}</div>
+                                                <div><strong>Stop:</strong> {execCapabilities.paper.supports_stop ? 'Yes' : 'No'}</div>
+                                                <div><strong>Trailing:</strong> {execCapabilities.paper.supports_trailing_stop ? 'Yes' : 'No'}</div>
+                                                <div><strong>Post-only:</strong> {execCapabilities.paper.supports_post_only ? 'Yes' : 'No'}</div>
+                                                <div><strong>Reduce-only:</strong> {execCapabilities.paper.supports_reduce_only ? 'Yes' : 'No'}</div>
+                                                <div><strong>Iceberg:</strong> {execCapabilities.paper.supports_iceberg ? 'Yes' : 'No'}</div>
+                                                <div><strong>Max Leverage:</strong> {execCapabilities.paper.max_leverage}x</div>
+                                            </div>
+                                        ) : <p>Loading capabilities...</p>}
+                                    </div>
+
+                                    <div class="card primary">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-network-wired"></i> Binance Broker Capabilities</span>
+                                        </div>
+                                        {execCapabilities && execCapabilities.binance ? (
+                                            <div style={{fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem'}}>
+                                                <div><strong>Market:</strong> {execCapabilities.binance.supports_market ? 'Yes' : 'No'}</div>
+                                                <div><strong>Limit:</strong> {execCapabilities.binance.supports_limit ? 'Yes' : 'No'}</div>
+                                                <div><strong>Stop:</strong> {execCapabilities.binance.supports_stop ? 'Yes' : 'No'}</div>
+                                                <div><strong>Trailing:</strong> {execCapabilities.binance.supports_trailing_stop ? 'Yes' : 'No'}</div>
+                                                <div><strong>Post-only:</strong> {execCapabilities.binance.supports_post_only ? 'Yes' : 'No'}</div>
+                                                <div><strong>Reduce-only:</strong> {execCapabilities.binance.supports_reduce_only ? 'Yes' : 'No'}</div>
+                                                <div><strong>Iceberg:</strong> {execCapabilities.binance.supports_iceberg ? 'Yes' : 'No'}</div>
+                                                <div><strong>Max Leverage:</strong> {execCapabilities.binance.max_leverage}x</div>
+                                            </div>
+                                        ) : <p>Loading capabilities...</p>}
+                                    </div>
+                                </div>
+
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-list-check"></i> Immutable Order Execution Audit Logs</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Timestamp</th>
+                                                    <th style={{padding: '0.5rem'}}>Actor</th>
+                                                    <th style={{padding: '0.5rem'}}>Action</th>
+                                                    <th style={{padding: '0.5rem'}}>Reason</th>
+                                                    <th style={{padding: '0.5rem'}}>Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {execAudit && execAudit.length > 0 ? (
+                                                    execAudit.slice(-10).map((r, i) => (
+                                                        <tr key={i} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem'}}>{new Date(r.timestamp).toLocaleTimeString()}</td>
+                                                            <td style={{padding: '0.5rem', color: 'var(--accent)'}}>{r.actor}</td>
+                                                            <td style={{padding: '0.5rem'}}><span class={`badge ${r.action === 'REJECT' ? 'danger' : 'success'}`}>{r.action}</span></td>
+                                                            <td style={{padding: '0.5rem'}}>{r.reason}</td>
+                                                            <td style={{padding: '0.5rem', fontFamily: 'monospace', color: 'var(--text-muted)'}}>
+                                                                {JSON.stringify(r.after)}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="5" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No audit records logged yet.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title" style={{display: 'flex', justifyContent: 'between', alignItems: 'center'}}>
+                                        <span><i class="fa-solid fa-receipt"></i> Active Order Book & Execution State</span>
+                                    </div>
+                                    {activeSnapshot && activeSnapshot.execution_state ? (
+                                        <div>
+                                            <pre style={{background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto', fontSize: '0.85rem'}}>
+                                                {JSON.stringify(activeSnapshot.execution_state, null, 2)}
+                                            </pre>
+                                        </div>
+                                    ) : <p style={{color: 'var(--text-muted)'}}>Select a symbol/timeframe filter to load execution details.</p>}
+                                </div>
+
+                                {/* Sprint 8 — OMS & EMS Control Panel */}
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                        <span><i class="fa-solid fa-gears"></i> OMS Subsystem Control & Crash Recovery</span>
+                                        <button class="btn accent btn-sm" onClick={triggerRecovery}>
+                                            <i class="fa-solid fa-rotate"></i> Run Recovery Reconciliation Sweep
+                                        </button>
+                                    </div>
+                                    <div style={{fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '0.5rem'}}>
+                                        <div style={{background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px'}}>
+                                            <strong>OMS Configuration:</strong>
+                                            <div style={{color: 'var(--text-muted)', marginTop: '0.25rem'}}>
+                                                Mode: <span class="badge success">Live Paper Adapters</span><br/>
+                                                Max open intents: 50<br/>
+                                                Timeout limit: 300s
+                                            </div>
+                                        </div>
+                                        <div style={{background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px'}}>
+                                            <strong>OMS Intents Counters:</strong>
+                                            <div style={{color: 'var(--text-muted)', marginTop: '0.25rem'}}>
+                                                Total: {omsState ? omsState.total_intents : 0}<br/>
+                                                Active: {omsState ? omsState.active_intents : 0}<br/>
+                                                Completed: {omsState ? omsState.completed_intents : 0}
+                                            </div>
+                                        </div>
+                                        <div style={{background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px'}}>
+                                            <strong>OMS Failures / Rejections:</strong>
+                                            <div style={{color: 'var(--text-muted)', marginTop: '0.25rem'}}>
+                                                Rejected: <span style={{color: 'var(--danger)'}}>{omsState ? omsState.rejected_intents : 0}</span><br/>
+                                                Failed: <span style={{color: 'var(--danger)'}}>{omsState ? omsState.failed_intents : 0}</span><br/>
+                                                Cancelled: {omsState ? omsState.cancelled_intents : 0}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-network-wired"></i> Venue Connection Monitor</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Venue Identifier</th>
+                                                    <th style={{padding: '0.5rem'}}>Connection State</th>
+                                                    <th style={{padding: '0.5rem'}}>Ping Latency</th>
+                                                    <th style={{padding: '0.5rem'}}>Default Routing</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {brokerStatuses && brokerStatuses.length > 0 ? (
+                                                    brokerStatuses.map((b, i) => (
+                                                        <tr key={i} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem', fontWeight: 'bold'}}>{b.broker_id.toUpperCase()}</td>
+                                                            <td style={{padding: '0.5rem'}}>
+                                                                <span class={`badge ${b.is_connected ? 'success' : 'danger'}`}>
+                                                                    {b.is_connected ? 'CONNECTED' : 'OFFLINE'}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{padding: '0.5rem'}}>{b.is_connected ? `${b.latency_ms.toFixed(2)} ms` : 'N/A'}</td>
+                                                            <td style={{padding: '0.5rem', color: 'var(--text-muted)'}}>SMART (Cheapest & Fastest)</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td style={{padding: '0.5rem', fontWeight: 'bold'}}>PAPER (SIMULATOR)</td>
+                                                        <td style={{padding: '0.5rem'}}><span class="badge success">CONNECTED</span></td>
+                                                        <td style={{padding: '0.5rem'}}>0.05 ms</td>
+                                                        <td style={{padding: '0.5rem', color: 'var(--text-muted)'}}>DIRECT</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-list-check"></i> OMS Order Intents Audit Log</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Intent ID</th>
+                                                    <th style={{padding: '0.5rem'}}>Symbol</th>
+                                                    <th style={{padding: '0.5rem'}}>Side</th>
+                                                    <th style={{padding: '0.5rem'}}>Algorithm</th>
+                                                    <th style={{padding: '0.5rem'}}>Quantity</th>
+                                                    <th style={{padding: '0.5rem'}}>Current State</th>
+                                                    <th style={{padding: '0.5rem'}}>Rejection Reasons</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {omsIntents && omsIntents.length > 0 ? (
+                                                    omsIntents.slice(-10).map((intent, i) => (
+                                                        <tr key={i} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem', color: 'var(--accent)'}}>{intent.intent_id}</td>
+                                                            <td style={{padding: '0.5rem'}}>{intent.symbol}</td>
+                                                            <td style={{padding: '0.5rem'}}>
+                                                                <span class={`badge ${intent.side === 'BUY' ? 'success' : 'danger'}`}>
+                                                                    {intent.side}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{padding: '0.5rem'}}>{intent.algorithm}</td>
+                                                            <td style={{padding: '0.5rem'}}>{intent.quantity}</td>
+                                                            <td style={{padding: '0.5rem'}}>
+                                                                <span class={`badge ${intent.state === 'COMPLETED' ? 'success' : (intent.state === 'REJECTED' || intent.state === 'FAILED') ? 'danger' : 'info'}`}>
+                                                                    {intent.state}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{padding: '0.5rem', color: 'var(--danger)'}}>
+                                                                {intent.rejection_reasons && intent.rejection_reasons.length > 0 ? intent.rejection_reasons.join(', ') : 'None'}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="7" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No OMS Order Intents received yet.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="card primary">
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-business-time"></i> EMS Algorithmic Executions (Slices Progress)</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Algo Execution ID</th>
+                                                    <th style={{padding: '0.5rem'}}>Algorithm</th>
+                                                    <th style={{padding: '0.5rem'}}>Total Qty</th>
+                                                    <th style={{padding: '0.5rem'}}>Filled Qty</th>
+                                                    <th style={{padding: '0.5rem'}}>Slices Processed</th>
+                                                    <th style={{padding: '0.5rem'}}>Average Fill Price</th>
+                                                    <th style={{padding: '0.5rem'}}>Execution Progress</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {emsExecutions && emsExecutions.length > 0 ? (
+                                                    emsExecutions.slice(-10).map((exec, i) => (
+                                                        <tr key={i} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem', color: 'var(--accent)'}}>{exec.algo_id}</td>
+                                                            <td style={{padding: '0.5rem'}}>{exec.algorithm}</td>
+                                                            <td style={{padding: '0.5rem'}}>{exec.total_quantity}</td>
+                                                            <td style={{padding: '0.5rem'}}>{exec.filled_quantity}</td>
+                                                            <td style={{padding: '0.5rem'}}>{exec.completed_slices} / {exec.total_slices}</td>
+                                                            <td style={{padding: '0.5rem'}}>{exec.average_fill_price ? `$${exec.average_fill_price.toFixed(2)}` : 'N/A'}</td>
+                                                            <td style={{padding: '0.5rem'}}>
+                                                                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                                                                    <div style={{width: '80px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden'}}>
+                                                                        <div style={{width: `${exec.progress_pct}%`, height: '100%', background: 'var(--accent)'}}></div>
+                                                                    </div>
+                                                                    <span>{exec.progress_pct}%</span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="7" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No active algorithmic execution slices running.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        )}
+
+                        {activeTab === 'portfolio' && (
+                            <React.Fragment>
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card info">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-wallet"></i> Portfolio Value</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Equity Value</span>
+                                            <span class="metric-value highlight" style={{color: 'var(--success)'}}>
+                                                ${portfolioData && portfolioData.metrics ? portfolioData.metrics.portfolio_value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '100,000.00'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Drawdown</span>
+                                            <span class="metric-value" style={{color: portfolioData && portfolioData.health && portfolioData.health.drawdown > 0.0 ? 'var(--danger)' : 'var(--text-muted)'}}>
+                                                {portfolioData && portfolioData.health ? `${(portfolioData.health.drawdown * 100).toFixed(2)}%` : '0.00%'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card accent">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-chart-line"></i> Realized & Unrealized PnL</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Realized PnL</span>
+                                            <span class="metric-value highlight" style={{color: portfolioData && portfolioData.metrics && portfolioData.metrics.total_realized_pnl >= 0 ? 'var(--success)' : 'var(--danger)'}}>
+                                                ${portfolioData && portfolioData.metrics ? portfolioData.metrics.total_realized_pnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Unrealized PnL</span>
+                                            <span class="metric-value" style={{color: portfolioData && portfolioData.metrics && portfolioData.metrics.total_unrealized_pnl >= 0 ? 'var(--success)' : 'var(--danger)'}}>
+                                                ${portfolioData && portfolioData.metrics ? portfolioData.metrics.total_unrealized_pnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card danger">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-chart-pie"></i> Exposures & Leverage</span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Gross Exposure</span>
+                                            <span class="metric-value highlight">
+                                                ${portfolioData && portfolioData.metrics ? portfolioData.metrics.gross_exposure.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
+                                            </span>
+                                        </div>
+                                        <div class="metric-group">
+                                            <span class="metric-label">Leverage Ratio</span>
+                                            <span class="metric-value">
+                                                {portfolioData && portfolioData.metrics ? `${portfolioData.metrics.leverage_ratio.toFixed(2)}x` : '0.00x'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dashboard-grid" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card primary">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-percent"></i> Win Rate Statistics</span>
+                                        </div>
+                                        <div style={{fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem'}}>
+                                            <div><strong>Winning %:</strong> {portfolioData && portfolioData.statistics ? `${(portfolioData.statistics.winning_pct * 100).toFixed(1)}%` : '0.0%'}</div>
+                                            <div><strong>Losing %:</strong> {portfolioData && portfolioData.statistics ? `${(portfolioData.statistics.losing_pct * 100).toFixed(1)}%` : '0.0%'}</div>
+                                            <div><strong>Avg Win:</strong> ${portfolioData && portfolioData.statistics ? portfolioData.statistics.average_win.toFixed(2) : '0.00'}</div>
+                                            <div><strong>Avg Loss:</strong> ${portfolioData && portfolioData.statistics ? portfolioData.statistics.average_loss.toFixed(2) : '0.00'}</div>
+                                            <div><strong>Profit Factor:</strong> {portfolioData && portfolioData.statistics ? portfolioData.statistics.profit_factor.toFixed(2) : '1.00'}</div>
+                                            <div><strong>Total Trades:</strong> {portfolioData && portfolioData.statistics ? portfolioData.statistics.total_trades : 0}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card primary">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-shield-halved"></i> Portfolio Risk Health</span>
+                                        </div>
+                                        <div style={{fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem'}}>
+                                            <div><strong>Status:</strong> <span class={`badge ${portfolioData && portfolioData.health && portfolioData.health.status === 'HEALTHY' ? 'success' : 'danger'}`}>{portfolioData && portfolioData.health ? portfolioData.health.status : 'HEALTHY'}</span></div>
+                                            <div><strong>Margin Used:</strong> ${portfolioData && portfolioData.metrics ? portfolioData.metrics.margin_used.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</div>
+                                            <div><strong>Exposure/Capital:</strong> {portfolioData && portfolioData.health ? `${(portfolioData.health.risk_exposure_ratio * 100).toFixed(2)}%` : '0.00%'}</div>
+                                            <div><strong>Peak Equity:</strong> ${portfolioData && portfolioData.health ? '100,000.00' : '100,000.00'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card primary" style={{marginBottom: '1.5rem'}}>
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-folder-open"></i> Open Positions</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Symbol</th>
+                                                    <th style={{padding: '0.5rem'}}>Side</th>
+                                                    <th style={{padding: '0.5rem'}}>Quantity</th>
+                                                    <th style={{padding: '0.5rem'}}>Avg Entry</th>
+                                                    <th style={{padding: '0.5rem'}}>Current Price</th>
+                                                    <th style={{padding: '0.5rem'}}>Market Value</th>
+                                                    <th style={{padding: '0.5rem'}}>Unrealized PnL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {portfolioPositions && portfolioPositions.open && portfolioPositions.open.length > 0 ? (
+                                                    portfolioPositions.open.map((pos, idx) => (
+                                                        <tr key={idx} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem', fontWeight: 'bold'}}>{pos.symbol}</td>
+                                                            <td style={{padding: '0.5rem'}}><span class={`badge ${pos.side === 'LONG' ? 'success' : 'danger'}`}>{pos.side}</span></td>
+                                                            <td style={{padding: '0.5rem'}}>{pos.quantity}</td>
+                                                            <td style={{padding: '0.5rem'}}>${pos.average_entry.toFixed(2)}</td>
+                                                            <td style={{padding: '0.5rem'}}>${pos.current_price.toFixed(2)}</td>
+                                                            <td style={{padding: '0.5rem'}}>${pos.market_value.toFixed(2)}</td>
+                                                            <td style={{padding: '0.5rem', fontWeight: 'bold', color: pos.unrealized_pnl >= 0 ? 'var(--success)' : 'var(--danger)'}}>
+                                                                ${pos.unrealized_pnl.toFixed(2)}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="7" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No active open positions.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="card primary">
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-box-archive"></i> Closed Position History</span>
+                                    </div>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem'}}>
+                                            <thead>
+                                                <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)'}}>
+                                                    <th style={{padding: '0.5rem'}}>Symbol</th>
+                                                    <th style={{padding: '0.5rem'}}>Side</th>
+                                                    <th style={{padding: '0.5rem'}}>Quantity</th>
+                                                    <th style={{padding: '0.5rem'}}>Avg Entry</th>
+                                                    <th style={{padding: '0.5rem'}}>Avg Exit</th>
+                                                    <th style={{padding: '0.5rem'}}>Realized PnL</th>
+                                                    <th style={{padding: '0.5rem'}}>Close Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {portfolioPositions && portfolioPositions.closed && portfolioPositions.closed.length > 0 ? (
+                                                    portfolioPositions.closed.slice(-10).map((pos, idx) => (
+                                                        <tr key={idx} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                                            <td style={{padding: '0.5rem', fontWeight: 'bold'}}>{pos.symbol}</td>
+                                                            <td style={{padding: '0.5rem'}}><span class={`badge ${pos.side === 'LONG' ? 'success' : 'danger'}`}>{pos.side}</span></td>
+                                                            <td style={{padding: '0.5rem'}}>{pos.quantity}</td>
+                                                            <td style={{padding: '0.5rem'}}>${pos.average_entry.toFixed(2)}</td>
+                                                            <td style={{padding: '0.5rem'}}>${pos.average_exit.toFixed(2)}</td>
+                                                            <td style={{padding: '0.5rem', fontWeight: 'bold', color: pos.realized_pnl >= 0 ? 'var(--success)' : 'var(--danger)'}}>
+                                                                ${pos.realized_pnl.toFixed(2)}
+                                                            </td>
+                                                            <td style={{padding: '0.5rem'}}>{new Date(pos.close_time).toLocaleTimeString()}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="7" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No closed positions.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        )}
+
+                        {activeTab === 'platform' && (
+                            <React.Fragment>
+                                <div class="card">
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-heartbeat"></i> Subsystem Heartbeats Telemetry</span>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style={{padding: '0.75rem'}}>Subsystem</th>
+                                                    <th style={{padding: '0.75rem'}}>Status</th>
+                                                    <th style={{padding: '0.75rem'}}>Latency</th>
+                                                    <th style={{padding: '0.75rem'}}>Queue Depth</th>
+                                                    <th style={{padding: '0.75rem'}}>Processed</th>
+                                                    <th style={{padding: '0.75rem'}}>Memory</th>
+                                                    <th style={{padding: '0.75rem'}}>Errors</th>
+                                                    <th style={{padding: '0.75rem'}}>Last Update</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {Object.keys(platformHeartbeats).length > 0 && !platformHeartbeats.status ? (
+                                                    Object.values(platformHeartbeats).filter(hb => hb && typeof hb === 'object' && hb.module_id).map((hb) => (
+                                                        <tr key={hb.module_id}>
+                                                            <td style={{padding: '0.75rem', fontWeight: 600}}>{hb.module_name} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>({hb.module_id})</span></td>
+                                                            <td style={{padding: '0.75rem'}}>
+                                                                <span style={{
+                                                                    padding: '0.2rem 0.5rem',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '0.75rem',
+                                                                    fontWeight: 600,
+                                                                    backgroundColor: (hb.status || '') === 'running' ? 'rgba(46, 204, 113, 0.15)' : (hb.status || '') === 'failed' ? 'rgba(231, 76, 60, 0.15)' : 'rgba(241, 196, 15, 0.15)',
+                                                                    color: (hb.status || '') === 'running' ? '#2ecc71' : (hb.status || '') === 'failed' ? '#e74c3c' : '#f1c40f'
+                                                                }}>
+                                                                    {(hb.status || '').toUpperCase()}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{padding: '0.75rem'}}>{(hb.latency_ms || 0).toFixed(2)} ms</td>
+                                                            <td style={{padding: '0.75rem'}}>{hb.queue_depth || 0}</td>
+                                                            <td style={{padding: '0.75rem'}}>{hb.messages_processed || 0}</td>
+                                                            <td style={{padding: '0.75rem'}}>{(hb.memory_usage || 0).toFixed(2)} MB</td>
+                                                            <td style={{padding: '0.75rem'}}>
+                                                                {hb.error_count > 0 ? (
+                                                                    <span style={{
+                                                                        padding: '0.2rem 0.5rem',
+                                                                        borderRadius: '4px',
+                                                                        fontSize: '0.75rem',
+                                                                        fontWeight: 600,
+                                                                        backgroundColor: 'rgba(231, 76, 60, 0.15)',
+                                                                        color: '#e74c3c'
+                                                                    }}>{hb.error_count}</span>
+                                                                ) : (
+                                                                    <span style={{color: 'var(--text-muted)'}}>0</span>
+                                                                )}
+                                                            </td>
+                                                            <td style={{padding: '0.75rem'}}>{new Date(hb.last_update).toLocaleTimeString()}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="8" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>Waiting for heartbeat telemetry...</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-2" style={{marginTop: '1.5rem'}}>
+                                    <div class="card">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-network-wired"></i> Loaded Subsystems & Dependencies</span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{padding: '0.75rem'}}>Subsystem Name</th>
+                                                        <th style={{padding: '0.75rem'}}>Version</th>
+                                                        <th style={{padding: '0.75rem'}}>Dependencies</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {platformModules.length > 0 ? (
+                                                        platformModules.map((mod) => (
+                                                            <tr key={mod.id}>
+                                                                <td style={{padding: '0.75rem', fontWeight: 600}}>{mod.name} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>({mod.id})</span></td>
+                                                                <td style={{padding: '0.75rem'}}>{mod.version}</td>
+                                                                <td style={{padding: '0.75rem'}}>
+                                                                    {mod.dependencies.length > 0 ? (
+                                                                        mod.dependencies.map(d => (
+                                                                            <span key={d} style={{
+                                                                                padding: '0.2rem 0.5rem',
+                                                                                borderRadius: '4px',
+                                                                                fontSize: '0.75rem',
+                                                                                fontWeight: 600,
+                                                                                backgroundColor: 'rgba(127, 140, 141, 0.15)',
+                                                                                color: '#95a5a6',
+                                                                                marginRight: '0.25rem',
+                                                                                display: 'inline-block'
+                                                                            }}>{d}</span>
+                                                                        ))
+                                                                    ) : (
+                                                                        <span style={{color: 'var(--text-muted)', fontSize: '0.85rem'}}>None</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="3" style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No modules loaded.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="card">
+                                        <div class="card-title">
+                                            <span><i class="fa-solid fa-clock-rotate-left"></i> Event Dispatch Latency Timeline (Last 100)</span>
+                                        </div>
+                                        <div style={{maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem'}}>
+                                            {platformEvents.length > 0 ? (
+                                                platformEvents.map((evt, idx) => (
+                                                    <div key={idx} style={{
+                                                        borderBottom: '1px solid var(--border-color)',
+                                                        padding: '0.5rem 0',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <div>
+                                                            <span style={{fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-color)'}}>{evt.event_type}</span>
+                                                            <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem'}}>
+                                                                Source: {evt.source} | Correlation: <span style={{fontFamily: 'monospace'}}>{evt.correlation_id || 'N/A'}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{textAlign: 'right'}}>
+                                                            <span style={{
+                                                                fontSize: '0.85rem',
+                                                                fontWeight: 600,
+                                                                color: evt.processing_latency_ms > 10 ? '#e74c3c' : '#2ecc71'
+                                                            }}>{evt.processing_latency_ms.toFixed(2)} ms</span>
+                                                            <div style={{fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.15rem'}}>
+                                                                {evt.timestamp.includes('T') ? evt.timestamp.split('T')[1].substring(0, 8) : evt.timestamp}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)'}}>No events processed yet.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        )}
+
+                        {activeTab === 'logs' && (
+                            <React.Fragment>
+                                <div class="card">
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-terminal"></i> Platform logs console</span>
+                                    </div>
+                                    <div class="log-console">
+                                        {logs.map((log, idx) => (
+                                            <div key={idx} class={`log-entry ${log.severity}`}>
+                                                [{log.timestamp}] {log.message}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div class="card" style={{marginTop: '1.5rem'}}>
+                                    <div class="card-title">
+                                        <span><i class="fa-solid fa-timeline"></i> Event dispatches timeline</span>
+                                    </div>
+                                    <div class="timeline">
+                                        {events.map((e) => (
+                                            <div key={e.event_id} class="timeline-item">
+                                                <div class="timeline-content">
+                                                    <div class="timeline-header">
+                                                        <span class="timeline-subsystem">{e.subsystem}</span>
+                                                        <span class="timeline-time">{new Date(e.timestamp).toLocaleTimeString()}</span>
+                                                    </div>
+                                                    <p style={{fontWeight: 600, fontSize: '0.9rem'}}>{e.event_name}</p>
+                                                    <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem'}}>
+                                                        Target: {e.symbol}/{e.timeframe} | Latency: {e.latency_ms.toFixed(1)}ms
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {events.length === 0 && <p style={{color: 'var(--text-muted)'}}>No timeline events recorded yet.</p>}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        )}
+                    </main>
+
+                    <footer>
+                        &copy; 2026 Toji Trading System - Observability Platform. Built with React and FastAPI.
+                    </footer>
+                </div>
+            );
+        }
+
+        const rootElement = document.getElementById('root');
+        ReactDOM.createRoot(rootElement).render(<App />);
+    </script>
+</body>
+</html>

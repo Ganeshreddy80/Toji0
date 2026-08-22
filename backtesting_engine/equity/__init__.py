@@ -1,0 +1,1 @@
+"""Account equity calculator subpackage."""

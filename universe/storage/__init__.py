@@ -1,0 +1,1 @@
+"""Universe state persistence repository."""

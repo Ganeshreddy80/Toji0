@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-06-30T17:31:05.785186+00:00",
+  "simulation_24h": {
+    "ticks_run": 288,
+    "elapsed_wall_sec": 8.979201084002852e-05,
+    "elapsed_cpu_sec": 7.999999999996898e-05,
+    "mem_growth_mb": 0.015625,
+    "peak_mem_mb": 174.328125,
+    "avg_cycle_ms": 7.195487544069895e-05,
+    "event_throughput_per_sec": 12829649.199552707,
+    "active_threads": 3
+  },
+  "simulation_72h": {
+    "ticks_run": 864,
+    "elapsed_wall_sec": 0.00016445800429210067,
+    "elapsed_cpu_sec": 0.00016499999999997073,
+    "mem_growth_mb": 0.015625,
+    "peak_mem_mb": 174.34375,
+    "avg_cycle_ms": 7.67381101872565e-05,
+    "event_throughput_per_sec": 21014483.39274296,
+    "active_threads": 3
+  },
+  "simulation_7d": {
+    "ticks_run": 2016,
+    "elapsed_wall_sec": 0.000387999985832721,
+    "elapsed_cpu_sec": 0.00038799999999994395,
+    "mem_growth_mb": 0.03125,
+    "peak_mem_mb": 174.375,
+    "avg_cycle_ms": 8.240779910314207e-05,
+    "event_throughput_per_sec": 20783505.913519915,
+    "active_threads": 3
+  },
+  "simulation_30d": {
+    "ticks_run": 8640,
+    "elapsed_wall_sec": 0.0017874999903142452,
+    "elapsed_cpu_sec": 0.0017530000000000046,
+    "mem_growth_mb": 0.234375,
+    "peak_mem_mb": 174.609375,
+    "avg_cycle_ms": 9.063932237849157e-05,
+    "event_throughput_per_sec": 19334265.839030467,
+    "active_threads": 3
+  },
+  "recovery_metrics": {
+    "success": true,
+    "duration_ms": 5.984290997730568,
+    "checksum_match": true,
+    "checkpoint_id": "0ac1830b-3c1b-4002-91b9-fd8aa73c8b9c"
+  },
+  "database_rows": {
+    "orders": 0,
+    "trades": 0,
+    "positions": 0,
+    "configurations": 0,
+    "jobs": 0,
+    "monitoring_alerts": 0,
+    "reports": 0
+  }
+}
