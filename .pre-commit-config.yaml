@@ -1,0 +1,64 @@
+# ============================================================================
+# Toji — Pre-commit Configuration
+# Git hook automation for code quality enforcement
+# https://pre-commit.com
+# ============================================================================
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#   pre-commit run --all-files   (first run)
+# ============================================================================
+
+repos:
+  # ── General ────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ".vscode/"
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: debug-statements
+      - id: check-ast
+
+  # ── Ruff (Linter + Formatter) ──────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ── mypy (Type Checker) ────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic>=2.7.0
+          - fastapi>=0.111.0
+        args: [--ignore-missing-imports]
+        pass_filenames: false
+
+  # ── Security ───────────────────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: ".env.example"
+
+  # ── Commit Message ─────────────────────────────────────────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.27.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

@@ -1,0 +1,25 @@
+"""R55 Metrics events for EventBus publishing."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+from pydantic import BaseModel, Field
+
+
+class MetricsEvent(BaseModel):
+    event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class MetricRecorded(MetricsEvent):
+    name: str
+    value: float
+    component: str
+
+
+class SnapshotPublished(MetricsEvent):
+    cpu_pct: float
+    memory_mb: float
+    certification_status: str
+    uptime_sec: float

@@ -1,0 +1,145 @@
+# ============================================================================
+# TOJI — GitLab CI/CD Pipeline
+# ============================================================================
+#
+# Stages run sequentially. Each stage must pass before the next begins.
+# All jobs run on Python 3.11 (minimum supported version per pyproject.toml).
+#
+# Stage order:
+#   security  →  lint  →  test
+#
+# Rules:
+#   - Every merge request triggers the full pipeline.
+#   - Every push to main triggers the full pipeline.
+#   - No other branches trigger CI automatically.
+# ============================================================================
+
+stages:
+  - security
+  - lint
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONPATH: "$CI_PROJECT_DIR"
+  # Signal to the platform that we are running in a test/CI environment.
+  # This prevents boot_kernel() from calling load_dotenv() and validate_binance_env().
+  TOJI_APP_ENV: "testing"
+  # Suppress pytest-asyncio warning until pytest-asyncio is installed (Phase 1).
+  PYTHONWARNINGS: "ignore::pytest.PytestConfigWarning"
+
+cache:
+  key:
+    files:
+      - requirements.txt
+      - pyproject.toml
+  paths:
+    - .cache/pip
+
+# ============================================================================
+# Base template — inherited by all jobs
+# ============================================================================
+.python-base:
+  image: python:3.11-slim
+  before_script:
+    - pip install --quiet --upgrade pip
+    - pip install --quiet -r requirements.txt
+    - pip install --quiet ".[dev]"
+
+# ============================================================================
+# Stage: security
+# ============================================================================
+
+secret-scan:
+  extends: .python-base
+  stage: security
+  script:
+    - pip install --quiet detect-secrets
+    # Scan the repository for secrets.
+    # --list-all-plugins shows which detectors are active.
+    # Exit code 1 means secrets were found; exit code 0 means clean.
+    # We exclude .secrets.baseline itself and test fixtures from scanning.
+    - |
+      detect-secrets scan \
+        --exclude-files '\.secrets\.baseline' \
+        --exclude-files 'tests/fixtures/.*' \
+        > /tmp/scan_results.json
+      python3 -c "
+import json, sys
+with open('/tmp/scan_results.json') as f:
+    results = json.load(f)
+findings = results.get('results', {})
+if findings:
+    print('SECRET SCAN FAILED: Potential secrets detected:')
+    for filepath, secrets in findings.items():
+        for secret in secrets:
+            print(f'  {filepath}:{secret[\"line_number\"]}: {secret[\"type\"]}')
+    sys.exit(1)
+else:
+    print('Secret scan passed: no secrets detected.')
+"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: false
+
+# ============================================================================
+# Stage: lint
+# ============================================================================
+
+ruff-check:
+  extends: .python-base
+  stage: lint
+  script:
+    - ruff check .
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: false
+
+ruff-format:
+  extends: .python-base
+  stage: lint
+  script:
+    - ruff format --check .
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: false
+
+# ============================================================================
+# Stage: test
+# ============================================================================
+
+unit-tests:
+  extends: .python-base
+  stage: test
+  script:
+    # Run unit tests only. Integration tests require a running kernel
+    # and are excluded here until the async/sync fix lands in Phase 1.
+    - pytest tests/unit/ -v --tb=short -ra
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: false
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - .coverage
+
+integration-tests:
+  extends: .python-base
+  stage: test
+  script:
+    # Integration tests are run but allowed to fail until the primary
+    # integration test is fixed in Phase 1 (async/sync boundary bug).
+    # Tracked: ISSUE-01, ISSUE-02 in the Phase 0 verification review.
+    - pytest tests/integration/ -v --tb=short -ra -m "not slow"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: true
+  artifacts:
+    when: always
+    expire_in: 7 days

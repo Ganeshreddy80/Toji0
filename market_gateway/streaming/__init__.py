@@ -1,0 +1,1 @@
+"""Market Gateway streaming package."""
