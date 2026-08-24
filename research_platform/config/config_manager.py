@@ -21,9 +21,20 @@ logger = logging.getLogger(__name__)
 class ConfigManager(IConfigManager):
     """Central entry coordinator for active configurations, hot-reloads, and Postgres persists."""
 
-    def __init__(self, yaml_path: Optional[str] = None, default_profile: str = "PAPER") -> None:
+    def __init__(
+        self,
+        yaml_path: Optional[str] = None,
+        default_profile: str = "PAPER",
+        *,
+        require_secure_database: bool = False,
+        secret_provider: Optional[Any] = None,
+    ) -> None:
         self.yaml_path = yaml_path
-        self.loader = ConfigLoader(default_profile)
+        self.loader = ConfigLoader(
+            default_profile,
+            require_secure_database=require_secure_database,
+            secret_provider=secret_provider,
+        )
         self.repository = ConfigRepository()
         self._lock = threading.Lock()
         

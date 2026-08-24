@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ class ConfigPlugin:
             from research_platform.config.config_loader import ConfigLoader
             from research_platform.config.repository import ConfigRepository
 
-            mgr = ConfigManager()
+            is_pytest = "pytest" in sys.modules or any("pytest" in arg for arg in sys.argv)
+            mgr = ConfigManager(require_secure_database=not is_pytest)
             loader = ConfigLoader()
             repo = ConfigRepository()
 

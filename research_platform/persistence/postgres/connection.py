@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, Any
+from urllib.parse import quote, urlencode
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
@@ -33,11 +34,17 @@ class DatabaseConnection:
         if raw_url:
             pg_url = raw_url
         else:
-            pg_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+            pg_url = f"postgresql://{quote(str(user), safe='')}:{quote(str(password), safe='')}@{host}:{port}/{dbname}"
+            tls_params = {
+                key: self.config[key]
+                for key in ("sslmode", "sslrootcert", "channel_binding")
+                if self.config.get(key)
+            }
+            if tls_params:
+                pg_url = f"{pg_url}?{urlencode(tls_params)}"
 
-        # Detect if SSL is required based on URL (Neon always requires it)
-        # sslmode=require or ssl in query string means we must not strip these params
-        is_ssl = "sslmode" in pg_url or "ssl" in pg_url
+        # TLS settings are supplied by the URL or secure database configuration.
+        is_ssl = "sslmode" in pg_url or "sslrootcert" in pg_url or "channel_binding" in pg_url
         # Neon pooler connections use port 5432 — no special port needed, but longer timeout
         connect_timeout = 10 if is_ssl else 2
 
@@ -88,7 +95,7 @@ class DatabaseConnection:
             import os
             import sys
             is_pytest = "pytest" in sys.modules or any("pytest" in arg for arg in sys.argv)
-            toji_mode = os.getenv("TOJI_MODE", "PAPER").upper()
+            toji_mode = str(self.config.get("_runtime_mode") or os.getenv("TOJI_MODE", "PAPER")).upper()
             force_check = os.getenv("FORCE_DB_FALLBACK_CHECK") == "true"
             if toji_mode != "DEV" and (not is_pytest or force_check):
                 # 1. Alert Telegram directly via urllib

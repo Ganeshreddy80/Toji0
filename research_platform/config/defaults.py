@@ -12,7 +12,7 @@ DEFAULT_DEV_PROFILE: Dict[str, Any] = {
         "host": "localhost",
         "port": 5432,
         "username": "postgres",
-        "password": "dev-password",
+        "password": "",
         "database": "toji_dev"
     },
     "exchange": {
@@ -44,7 +44,7 @@ DEFAULT_PAPER_PROFILE: Dict[str, Any] = {
         "host": "toji-postgres",
         "port": 5432,
         "username": "toji_paper",
-        "password": "paper-password",
+        "password": "",
         "database": "toji_paper"
     },
     "exchange": {
@@ -77,7 +77,7 @@ DEFAULT_PROD_PROFILE: Dict[str, Any] = {
         "host": "toji-postgres",
         "port": 5432,
         "username": "toji_prod",
-        "password": "prod-password",
+        "password": "",
         "database": "toji_prod"
     },
     "exchange": {
