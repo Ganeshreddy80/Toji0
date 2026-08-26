@@ -12,7 +12,7 @@ class DatabaseConfig(BaseModel):
     host: str = "localhost"
     port: int = 5432
     username: str = "postgres"
-    password: str = "postgres"
+    password: str = ""
     database: str = "toji"
     pool_size: int = 10
     max_overflow: int = 20

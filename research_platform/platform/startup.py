@@ -34,7 +34,9 @@ class PlatformStartupCoordinator:
         self.service_registry.register_service("Configuration", config)
 
         # 2. Database
-        db_manager = DatabaseLifecycleManager(config["database"])
+        database_config = dict(config["database"])
+        database_config["_runtime_mode"] = config.get("runtime", {}).get("mode", "PAPER")
+        db_manager = DatabaseLifecycleManager(database_config)
         db_manager.connect()
         self.service_registry.register_service("Database", db_manager)
 

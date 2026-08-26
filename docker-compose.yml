@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_DB: toji
       POSTGRES_USER: toji
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -58,12 +58,12 @@ services:
       - TOJI_DATABASE_PORT=5432
       - TOJI_DATABASE_DATABASE=toji
       - TOJI_DATABASE_USERNAME=toji
-      - TOJI_DATABASE_PASSWORD=password
+      - TOJI_DATABASE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       - DATABASE_HOST=toji-postgres
       - DATABASE_PORT=5432
       - DATABASE_NAME=toji
       - DATABASE_USER=toji
-      - DATABASE_PASSWORD=password
+      - DATABASE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       - REDIS_URL=redis://toji-redis:6379/0
       - TOJI_ADMIN_API_KEY=${TOJI_ADMIN_API_KEY}
       - TOJI_ANALYST_API_KEY=${TOJI_ANALYST_API_KEY}
