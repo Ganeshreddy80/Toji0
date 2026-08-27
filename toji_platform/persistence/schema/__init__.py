@@ -1,25 +1,33 @@
-"""Active schema persistence — schema manifest and migration management.
-
-Public API
-----------
-- ``SchemaManifest``: discovers and validates migration files
-- ``MigrationEntry``: represents a single versioned migration
-- ``SCHEMA_NAME``: canonical schema name (``toji_active``)
-- ``REQUIRED_TABLES``: authoritative tuple of required table names
-"""
+"""Public API for toji_platform.persistence.schema."""
 
 from toji_platform.persistence.schema.manifest import (
+    CHECKSUM_SENTINEL,
     COMPONENT,
     REQUIRED_TABLES,
     SCHEMA_NAME,
+    VERSIONS_DIR,
+    ChecksumMismatchError,
+    DuplicateVersionError,
     MigrationEntry,
+    MigrationError,
+    MigrationRunner,
     SchemaManifest,
 )
 
 __all__ = [
-    "SchemaManifest",
-    "MigrationEntry",
+    # Constants
     "SCHEMA_NAME",
-    "REQUIRED_TABLES",
     "COMPONENT",
+    "CHECKSUM_SENTINEL",
+    "REQUIRED_TABLES",
+    "VERSIONS_DIR",
+    # Exceptions
+    "MigrationError",
+    "ChecksumMismatchError",
+    "DuplicateVersionError",
+    # Data classes
+    "MigrationEntry",
+    # Classes
+    "SchemaManifest",
+    "MigrationRunner",
 ]
